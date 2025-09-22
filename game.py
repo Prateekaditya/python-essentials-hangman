@@ -1,44 +1,21 @@
-import os
-from typing import NamedTuple
-import enum
 from dataclasses import dataclass, field
-
-
-class GameConstants(NamedTuple):
-    name: str = "Hangman with 🐍"
-    lives: int = 5
-    life_symbol: str = "❤️"
-    screen_width: int = 80
-
-
-# TODO - 1.1: Ask yourself: Why namedtuple and not dict?
-# TODO - 1.2: How can we do better?
-GAME_CONSTANTS = GameConstants()
-
-
-class GAME_STATE(enum.StrEnum):
-    NOT_STARTED = "NOT_STARTED"
-    IN_PROGRESS = "IN_PROGRESS"
-    VICTORY = "VICTORY"
-    DEFEAT = "DEFEAT"
-
-
+from constants import  GAME_CONSTANTS,GAME_STATE,WordEntity
+from collections import deque
+from utils import clearscreen
 @dataclass
 class GameStatus:
     state: GAME_STATE = GAME_STATE.NOT_STARTED
     lives_remaining: int = GAME_CONSTANTS.lives
     masked_word: list[str] = field(default_factory=list)
-    # TODO - 2.1: Create a `target` to store the target word and hint
-    # TODO - 2.2: Create a collection `recent_guesses` to tracks the last three letters guessed by the player
+    target: WordEntity | None = None
+    recent_guesses:deque=field(default_factory=lambda:deque(maxlen=3))
 
 
 game_status = GameStatus()
 
 
 def render_game_screen():
-    # TODO - 3.1: How can we do better?
-    command = "clear" if os.name == "posix" else "cls"
-    os.system(command)
+    clearscreen()
 
     print("-" * GAME_CONSTANTS.screen_width)
     print(f"{GAME_CONSTANTS.name:^{GAME_CONSTANTS.screen_width}}")
@@ -47,12 +24,12 @@ def render_game_screen():
     )
     if game_status.state == GAME_STATE.IN_PROGRESS:
         print(f"{' '.join(game_status.masked_word)}")
-        print("<HINT> 💡")
-        print("Recent Guessed Letters: <Letters>")
+        print(f"{game_status.target.hint} 💡")
+        print(f"Recent Guessed Letters: {game_status.recent_guesses}")
     elif game_status.state == GAME_STATE.VICTORY:
-        print("🎉 You Won! You solved the word: <Target Word> 🎉")
+        print(f"🎉 You Won! You solved the word: {game_status.target.text} 🎉")
     elif game_status.state == GAME_STATE.DEFEAT:
-        print("💔 Game Over! The word was: <Target Word>")
+        print(f"💔 Game Over! The word was: {game_status.target.text}")
 
 
 def get_guessed_letter() -> str:
